@@ -11,14 +11,16 @@
 
 /** Lokalni operator za zadaću :
  *
- *   - div( grad u) + a u = f   u \Omega
- *                   u = g   na \Gamma_D\subseteq\partial\Omega
- *        - grad u . n = j   na \Gamma_N = \partial\Omega\setminus\Gamma_D
+ *   - div( a(x) grad u) + b(x) u = f(x)   u \Omega
+ *                   u = g(x)   na \Gamma_D\subseteq\partial\Omega
+ *        - a(x) grad u . n = j(x)   na \Gamma_N = \partial\Omega\setminus\Gamma_D
  *
  * sa konformnim konačnim elementima svih tipova u svim dimenzijama
  *
  * \tparam BCType klasa koja indicira rubni uvjet
  */
+
+
 
 
 
@@ -141,7 +143,7 @@ public:
         // izračunaj bazne funkcije u integracijskoj točki
 //        std::vector<Range> phi(lfsu_s.size());
 //        lfsu_s.finiteElement().localBasis().evaluateFunction(local,phi);
-        auto& phi = cache.evaluateFunction(local, lfsu_s.finiteElement().localBasis());
+        auto & phi = cache.evaluateFunction(local, lfsu_s.finiteElement().localBasis());
         // rješenje u integracijskoj točki
         RF u=0.0;
         for (size_type i=0; i<lfsu_s.size(); ++i)

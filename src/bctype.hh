@@ -4,6 +4,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/constraints/common/constraintsparameters.hh>
+#include "coefficients.hh"
 
 // Klasa mora proširivati klasu PDELab::DirichletConstraintsParameters
 // i u njoj prerađuje metodu isDirichlet() odlučuje je li neka točka 
@@ -17,13 +18,14 @@ public:
   //                       false ako nije. 
   template<typename I>
   bool isDirichlet(const I & intersection,
-                   const Dune::FieldVector<typename I::ctype, I::mydimension> & coord  // 2.6.0 mydimension daje dim interfacea
+                   const Dune::FieldVector
+                   <typename I::ctype, I::mydimension> & coord  // 2.6.0 mydimension daje dim interfacea
                    ) const
   {
 //    // Globalne koordinate točke (uočite da su dimenzije lokalne i globalne točke različite )
-//    Dune::FieldVector<typename I::ctype, I::dimension> xg = intersection.geometry().global( coord );
+    auto xg = intersection.geometry().global( coord );
 //
-//    if( xg[0]>1.0-1E-6 ) return false; //  na desnoj stranici nije Dirichletov uvjet
+    if( xg[0]>1.0-1E-8 ) return false; //  na desnoj stranici nije Dirichletov uvjet
 
     return true;  // Dirichletov uvjet na ostalim granicama
   }
@@ -73,8 +75,8 @@ public:
 //      y = 1.0;
 //    else
 //      y = 0.0;
-
-    y = x.two_norm2();
+     y = exact(x);
+//    y = x.two_norm2();
     return;
   }
 

@@ -32,11 +32,12 @@ template<class GV>
 void driver(const GV& gv)
 {
   using namespace Dune::PDELab;  // Da skratimo imena
-  typedef typename GV::Grid::ctype Coord;
+//  typedef typename GV::Grid::ctype Coord;
 
   // Prostor konačnih elemenata (grid function space) i GridOperator.
-  const int k = 1;
-  typedef QkLocalFiniteElementMap<GV,Coord,double,k>                FEM;
+  const int k = 2;
+  typedef QkLocalFiniteElementMap<GV,double,double,k>                FEM;
+  //  NoConstraints
   typedef ConformingDirichletConstraints                            CONSTRAINTS;
   typedef ISTL::VectorBackend<>                                     VBE;
   typedef GridFunctionSpace<GV,FEM,CONSTRAINTS,VBE>                 GFS;
@@ -78,8 +79,8 @@ void driver(const GV& gv)
   typedef DiscreteGridFunction<GFS,U> DGF;
 
   DGF udgf(gfs,u);
-  Dune::VTKWriter<GV> vtkwriter(gv,Dune::VTK::conforming);
-  vtkwriter.addVertexData(std::make_shared<VTKGridFunctionAdapter<DGF>>(udgf,"solution"));
+  Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,2);
+  vtkwriter.addVertexData(std::make_shared<VTKGridFunctionAdapter<DGF>>(udgf,"u"));
   vtkwriter.write("simple", Dune::VTK::ascii); //Dune::VTK::appendedraw);
 }
 

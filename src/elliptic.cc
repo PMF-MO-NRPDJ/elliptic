@@ -17,10 +17,10 @@
 
 int main(int argc, char** argv)
 {
-	Dune::MPIHelper& helper = Dune::MPIHelper::instance(argc, argv);
+  Dune::MPIHelper::instance(argc, argv);
 
   int level = 0;
-	if (argc > 1)
+  if (argc > 1)
 		 level = std::stoi(argv[1]);
 
   constexpr int dim = 2;
@@ -29,9 +29,9 @@ int main(int argc, char** argv)
   std::array<int,dim>           N{10,10};
   Dune::YaspGrid<dim> grid(L,N);
 
-	grid.globalRefine(level);
-	const auto& gv=grid.leafGridView();
-	driver(gv);
+  grid.globalRefine(level);
+  const auto& gv=grid.leafGridView();
+  driver(gv);
 
-    return 0;
+  return 0;
 }
