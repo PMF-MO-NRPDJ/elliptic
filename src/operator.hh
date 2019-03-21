@@ -37,7 +37,7 @@ public:
   // Zastavice koje signaliziraju da na svakom elementu treba zvati:
   enum { doPatternVolume = true };  // metodu za računanje patterna (iz volumnih doprinosa)
   enum { doAlphaVolume = true };    // alpha_volume
-  enum { doAlphaBoundary = true };  // alpha_boundary
+  enum { doAlphaBoundary = false };  // alpha_boundary
   using  LocalBasis = typename FEM::Traits::FiniteElementType::Traits::LocalBasisType ;
 
   DiffusionLocalOperator(const BCType& bctype_, // boundary cond.type
@@ -52,8 +52,10 @@ public:
   // lfsv = lokalni prostor funkcija za test funkciju
   // x    = vektor koeficijenata rješenja
   // r    = lokalni rezidual
+  // int_K ( a(x) grad u . grad phi_i + b(x) u phi_i - f(x) phi_i ) dx
   template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
-  void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x, const LFSV& lfsv, R& r) const
+  void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
+                     const LFSV& lfsv, R& r) const
   {
     // dimenzije
     const int dim  = EG::Geometry::mydimension;
@@ -65,7 +67,7 @@ public:
     typedef typename Traits::RangeFieldType  RF;
     typedef typename Traits::JacobianType    Jacobian;
     typedef typename Traits::RangeType       Range;
-    typedef Dune::FieldVector<RF,dimw> Gradient;
+    typedef Dune::FieldVector<double,dimw> Gradient;
     typedef typename LFSU::Traits::SizeType size_type;
 
     // integracijska formula
@@ -76,14 +78,17 @@ public:
     for (auto qpoint : rule)
       {
         // računanje baznih funckcija na referentnom elementu
-        auto& phi = cache.evaluateFunction(qpoint.position(), lfsu.finiteElement().localBasis());
+        auto& phi = cache.evaluateFunction(qpoint.position(),
+                                           lfsu.finiteElement().localBasis());
 
         // rješenje u integracijskoj točki
         double u=0.0;
-        for (size_type i=0; i<lfsu.size(); ++i) u += x(lfsu,i)*phi[i];
+        for (size_type i=0; i<lfsu.size(); ++i)
+             u += x(lfsu,i)*phi[i];
 
         // gradijent baznih funkcija
-        auto & gradphihat = cache.evaluateJacobian(qpoint.position(), lfsu.finiteElement().localBasis());
+        auto & gradphihat = cache.evaluateJacobian(qpoint.position(),
+                                                   lfsu.finiteElement().localBasis());
 
         // transformacija gradijenata s referentnog na fizički element
         auto const & jac = eg.geometry().jacobianInverseTransposed(qpoint.position());
@@ -94,16 +99,20 @@ public:
         //gradijent rješenja u integracijskoj točki
         Gradient gradu(0.0);
         for (size_type i=0; i<lfsu.size(); ++i)
-          gradu.axpy(x(lfsu,i),gradphi[i]);
+          gradu.axpy(x(lfsu,i),gradphi[i]); // grad u = sum_i x_i grd phi_i
 
-        RF f = 0.0;
-        RF a = 1.0;
+        auto qglobal = eg.geometry().global(qpoint.position());
+        double f = fun_f(qglobal);
+        double a = fun_a(qglobal);
+        double b = fun_b(qglobal);
 
         // integriramo :  grad u * grad phi_i + a*u*phi_i - f phi_i
-        RF factor = qpoint.weight() * eg.geometry().integrationElement(qpoint.position());
+        RF factor = qpoint.weight()
+                  * eg.geometry().integrationElement(qpoint.position());
 
         for (size_type i=0; i<lfsu.size(); ++i)
-          r.accumulate(lfsu, i, (gradu*gradphi[i] + a*u*phi[i] - f*phi[i]) * factor);
+          r.accumulate(lfsu, i, (a* (gradu*gradphi[i]) + b*u*phi[i]
+                                 - f*phi[i]) * factor);
       }
   }
 
@@ -145,9 +154,9 @@ public:
 //        lfsu_s.finiteElement().localBasis().evaluateFunction(local,phi);
         auto & phi = cache.evaluateFunction(local, lfsu_s.finiteElement().localBasis());
         // rješenje u integracijskoj točki
-        RF u=0.0;
+        double u=0.0;
         for (size_type i=0; i<lfsu_s.size(); ++i)
-          u += x_s(lfsu_s,i)*phi[i];
+          u += x_s(lfsu_s,i)*phi[i];// u = sum_i x_i phi_i
 
         // računanje Neumannovog rubnog uvjeta
         Dune::FieldVector<RF,dim> globalpos = ig.geometry().global(qpoint.position());

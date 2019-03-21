@@ -35,7 +35,7 @@ void driver(const GV& gv)
 //  typedef typename GV::Grid::ctype Coord;
 
   // Prostor konačnih elemenata (grid function space) i GridOperator.
-  const int k = 2;
+  const int k = 1;
   typedef QkLocalFiniteElementMap<GV,double,double,k>                FEM;
   //  NoConstraints
   typedef ConformingDirichletConstraints                            CONSTRAINTS;
@@ -68,7 +68,7 @@ void driver(const GV& gv)
   typedef ISTLBackend_SEQ_BCGS_SSOR              LS;
   typedef StationaryLinearProblemSolver<GO,LS,U> SLP;
 
-  U u(gfs,0.0);
+  U u(gfs,0.0), u_exact(gfs, 0.0), u_error(gfs, 0.0);
   G g(gv);
   interpolate(g,gfs,u);
   LS ls(5000,true);        // max 5000 iteracija, verbosity = true
@@ -79,8 +79,20 @@ void driver(const GV& gv)
   typedef DiscreteGridFunction<GFS,U> DGF;
 
   DGF udgf(gfs,u);
-  Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,2);
-  vtkwriter.addVertexData(std::make_shared<VTKGridFunctionAdapter<DGF>>(udgf,"u"));
+  ExactSolution<GV> exact_dgf(gv);
+  interpolate(exact_dgf, gfs, u_exact);
+  u_error = u;
+  u_error -= u_exact;
+  DGF errordgf(gfs, u_error);
+
+  Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,0);
+  vtkwriter.addVertexData(
+    std::make_shared<VTKGridFunctionAdapter<DGF>>(udgf,"u"));
+  vtkwriter.addVertexData(
+    std::make_shared<VTKGridFunctionAdapter<DGF>>(errordgf,"error"));
+  vtkwriter.addVertexData(
+    std::make_shared<VTKGridFunctionAdapter< ExactSolution<GV> >>
+                                                 (exact_dgf ,"exact"));
   vtkwriter.write("simple", Dune::VTK::ascii); //Dune::VTK::appendedraw);
 }
 
