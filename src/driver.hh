@@ -88,7 +88,9 @@ void driver(const GV& gv)
 
   std::cout << "L2 greška = " << l2_norm(gv, errordgf) << std::endl;
 
-  Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,0);
+  // k je stupanj polinoma u konačnom elementu. Za k=1 nema profinjenja;
+  // Za k=2 svaka se stranica elementa dijeli na dvije itd.
+  Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,Dune::refinementIntervals(1));
   vtkwriter.addVertexData(
     std::make_shared<VTKGridFunctionAdapter<DGF>>(udgf,"u"));
   vtkwriter.addVertexData(
