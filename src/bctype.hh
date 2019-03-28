@@ -25,11 +25,10 @@ public:
 //    // Globalne koordinate točke (uočite da su dimenzije lokalne i globalne točke različite )
     auto xg = intersection.geometry().global( coord );
 //
-    return true;
-/*
+//    return true;
+
     if( xg[0]>1.0-1E-8 ) return false; //  na desnoj stranici nije Dirichletov uvjet
     return true;  // Dirichletov uvjet na ostalim granicama
-*/
   }
 
 };

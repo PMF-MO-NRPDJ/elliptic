@@ -25,6 +25,7 @@
 
 #include "bctype.hh"
 #include "operator.hh"
+#include "l2error.hh"
 
 #include <memory>
 
@@ -84,6 +85,8 @@ void driver(const GV& gv)
   u_error = u;
   u_error -= u_exact;
   DGF errordgf(gfs, u_error);
+
+  std::cout << "L2 greška = " << l2_norm(gv, errordgf) << std::endl;
 
   Dune::SubsamplingVTKWriter<GV> vtkwriter(gv,0);
   vtkwriter.addVertexData(

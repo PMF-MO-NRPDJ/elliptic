@@ -37,7 +37,7 @@ public:
   // Zastavice koje signaliziraju da na svakom elementu treba zvati:
   enum { doPatternVolume = true };  // metodu za računanje patterna (iz volumnih doprinosa)
   enum { doAlphaVolume = true };    // alpha_volume
-  enum { doAlphaBoundary = false };  // alpha_boundary
+  enum { doAlphaBoundary = true};  // alpha_boundary
   using  LocalBasis = typename FEM::Traits::FiniteElementType::Traits::LocalBasisType ;
 
   DiffusionLocalOperator(const BCType& bctype_, // boundary cond.type
@@ -159,18 +159,16 @@ public:
           u += x_s(lfsu_s,i)*phi[i];// u = sum_i x_i phi_i
 
         // računanje Neumannovog rubnog uvjeta
-        Dune::FieldVector<RF,dim> globalpos = ig.geometry().global(qpoint.position());
-        RF j = 0.0;
-        if (globalpos[1]<0.5)
-          j = 1.0;
-        else
-          j = -1.0;
+        auto globalpos = ig.geometry().global(qpoint.position());
+
+        RF j = grad_exact(globalpos) * ig.unitOuterNormal(qpoint.position());
+        j *= -fun_a(globalpos);
 
         // integracija
         RF factor = qpoint.weight()*ig.geometry().integrationElement(qpoint.position());
 
         for (size_type i=0; i<lfsu_s.size(); ++i)
-          r_s.accumulate(lfsu_s,i, j*phi[i]*factor);
+          r_s.accumulate(lfsu_s, i, j*phi[i]*factor);
       }
   }
 
